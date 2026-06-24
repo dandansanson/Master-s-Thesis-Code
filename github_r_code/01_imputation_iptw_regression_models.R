@@ -514,6 +514,54 @@ dr_results <- lapply(outcomes, function(outcome) {
   )
 })
 
+### Across 20 imputed Data
+balance_all_plot <- balance_all %>%
+  mutate(
+    SMD = ifelse(
+      Phase == "Before IPTW",
+      abs(Diff.Un),
+      abs(Diff.Adj)
+    )
+  )
+
+balance_summary <- balance_all_plot %>%
+  group_by(Covariate, Phase) %>%
+  summarise(
+    Mean_SMD = mean(SMD, na.rm = TRUE),
+    Minimum_SMD = min(SMD, na.rm = TRUE),
+    Maximum_SMD = max(SMD, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+print(balance_summary)
+
+
+balance_all_plot_figure <- ggplot(
+  balance_summary,
+  aes(
+    x = Mean_SMD,
+    y = reorder(Covariate, Mean_SMD),
+    color = Phase
+  )
+) +
+  geom_errorbarh(
+    aes(xmin = Minimum_SMD, xmax = Maximum_SMD),
+    height = 0.15
+  ) +
+  geom_point(size = 3) +
+  geom_vline(
+    xintercept = 0.1,
+    linetype = "dashed"
+  ) +
+  labs(
+    title = "Covariate Balance Across 20 Imputed Datasets",
+    x = "Absolute standardized mean difference",
+    y = NULL,
+    color = NULL
+  ) +
+  theme_minimal()
+
+print(balance_all_plot_figure)
 full_dr <- save_model_summary(
   dr_results,
   outcome_labels,
